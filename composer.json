@@ -1,0 +1,51 @@
+{
+    "name": "splitstack/pg-laravel-translucid",
+    "type": "library",
+    "version": "2.1.0",
+    "description": "Make your Laravel enums friendly with TypeScript, selects, and many more convenient features",
+    "keywords": [
+        "laravel",
+        "enum",
+        "typescript",
+        "friendly",
+        "forms",
+        "translations"
+    ],
+    "require": {
+        "php": "^8.1",
+        "laravel/framework": "^10.0|^11.0|^12.0|^13.0"
+    },
+    "require-dev": {
+        "pestphp/pest": "^4.6",
+        "pestphp/pest-plugin-laravel": "^4.1"
+    },
+    "scripts": {
+        "test": "./vendor/bin/pest --colors=always --no-coverage",
+        "test:coverage": "docker compose exec php vendor/bin/pest --colors=always --coverage-html coverage && start coverage/index.html"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Splitstack\\Translucid\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Splitstack\\Translucid\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Splitstack\\Translucid\\Providers\\TranslucidServiceProvider"
+            ]
+        }
+    },
+    "authors": [
+        {
+            "name": "EmilienKopp"
+        }
+    ],
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
