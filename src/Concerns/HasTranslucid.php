@@ -2,15 +2,14 @@
 
 namespace Splitstack\Translucid\Concerns;
 
-use App\Models\Landlord\Tenant;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Pennant\Feature;
-use Splitstack\Translucid\Contracts\TenantDriver;
 use Splitstack\Translucid\Events\TranslucidCreated;
 use Splitstack\Translucid\Events\TranslucidDeleted;
 use Splitstack\Translucid\Events\TranslucidUpdated;
 use Splitstack\Translucid\Features\TranslucidFromApp;
 use Splitstack\Translucid\Features\TranslucidFromDB;
+use Splitstack\Translucid\Translucid;
 
 trait HasTranslucid
 {
@@ -38,16 +37,12 @@ trait HasTranslucid
         });
     }
 
-    private static function translucidScope(): mixed
+    private static function translucidScope(): ?string
     {
-        $driverClass = config('translucid.tenant_driver');
-        if (! $driverClass) {
+        if (! config('translucid.tenant_driver')) {
             return null;
         }
 
-        /** @var TenantDriver $driver */
-        $driver = app($driverClass);
-
-        return $driver->resolveFeatureScope(Tenant::current());
+        return Translucid::resolveChannel();
     }
 }
