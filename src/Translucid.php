@@ -2,10 +2,56 @@
 
 namespace Splitstack\Translucid;
 
+use Closure;
+use Illuminate\Support\Facades\DB;
+use PDO;
+
 class Translucid
 {
+    protected static ?Closure $channelResolver = null;
+
+    protected static ?Closure $listenConnectionsResolver = null;
+
+    public static function resolveChannelUsing(Closure $callback): void
+    {
+        static::$channelResolver = $callback;
+    }
+
+    public static function resolveChannel(): string
+    {
+        if (static::$channelResolver) {
+            return (static::$channelResolver)();
+        }
+
+        return config('translucid.default_channel', 'translucid');
+    }
+
+    public static function resolveListenConnectionsUsing(Closure $callback): void
+    {
+        static::$listenConnectionsResolver = $callback;
+    }
+
     /**
-     * @param  class-string<Model>  $modelClass
+     * @return array<string, PDO> channel => PDO
+     */
+    public static function resolveListenConnections(): array
+    {
+        if (static::$listenConnectionsResolver) {
+            return (static::$listenConnectionsResolver)();
+        }
+
+        $config = DB::connection()->getConfig();
+        $dsn = "pgsql:host={$config['host']};dbname={$config['database']};port={$config['port']}";
+        $pdo = new PDO($dsn, $config['username'], $config['password']);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $channel = config('translucid.default_channel', 'translucid');
+        $pdo->exec('LISTEN "'.$channel.'"');
+
+        return [$channel => $pdo];
+    }
+
+    /**
+     * @param  class-string  $modelClass
      */
     public function observe(string $modelClass): void
     {
@@ -49,7 +95,7 @@ class Translucid
     }
 
     /**
-     * @param  class-string<Model>  $modelClass
+     * @param  class-string  $modelClass
      */
     public function unobserve(string $modelClass): void
     {

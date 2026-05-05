@@ -1,19 +1,24 @@
 {
-    "name": "splitstack/pg-laravel-translucid",
+    "name": "splitstack/translucid",
     "type": "library",
-    "version": "2.1.0",
-    "description": "Make your Laravel enums friendly with TypeScript, selects, and many more convenient features",
+    "version": "1.0.0",
+    "description": "Realtime model updates for Laravel via Postgres LISTEN/NOTIFY or Eloquent lifecycle events",
     "keywords": [
         "laravel",
-        "enum",
-        "typescript",
-        "friendly",
-        "forms",
-        "translations"
+        "realtime",
+        "postgres",
+        "broadcasting",
+        "websockets",
+        "listen",
+        "notify"
     ],
     "require": {
-        "php": "^8.1",
-        "laravel/framework": "^10.0|^11.0|^12.0|^13.0"
+        "php": "^8.2",
+        "laravel/framework": "^11.0|^12.0|^13.0",
+        "laravel/pennant": "^1.0"
+    },
+    "suggest": {
+        "spatie/laravel-multitenancy": "Required when using SpatieMultitenancyDriver for per-tenant channel scoping."
     },
     "require-dev": {
         "pestphp/pest": "^4.6",
@@ -38,12 +43,16 @@
         "laravel": {
             "providers": [
                 "Splitstack\\Translucid\\Providers\\TranslucidServiceProvider"
-            ]
+            ],
+            "aliases": {
+                "Translucid": "Splitstack\\Translucid\\Facades\\Translucid"
+            }
         }
     },
     "authors": [
         {
-            "name": "EmilienKopp"
+            "name": "EmilienKopp",
+            "email": "emilien.kopp@gmail.com"
         }
     ],
     "minimum-stability": "stable",

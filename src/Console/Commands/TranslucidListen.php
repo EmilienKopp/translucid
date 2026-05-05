@@ -2,13 +2,14 @@
 
 namespace Splitstack\Translucid\Console\Commands;
 
-use App\Events\TranslucidCreated;
-use App\Events\TranslucidDeleted;
-use App\Events\TranslucidUpdated;
-use App\Models\Landlord\Tenant;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
+use Laravel\Pennant\Feature;
 use PDO;
+use Splitstack\Translucid\Events\TranslucidCreated;
+use Splitstack\Translucid\Events\TranslucidDeleted;
+use Splitstack\Translucid\Events\TranslucidUpdated;
+use Splitstack\Translucid\Features\TranslucidFromDB;
+use Splitstack\Translucid\Translucid;
 
 use function Laravel\Prompts\info;
 use function Laravel\Prompts\intro;
@@ -39,21 +40,10 @@ class TranslucidListen extends Command
      */
     public function handle(): int
     {
-        intro('Listening for PostgreSQL notifications...');
-        $tenants = Tenant::all();
-        $connections = [];
-        $dbConfig = DB::connection('tenant')->getConfig();
+        intro('Listening for PostgreSQL notifications.');
+        $connections = Translucid::resolveListenConnections();
 
-        foreach ($tenants as $tenant) {
-            $dsn = "pgsql:host={$dbConfig['host']};dbname={$tenant->database};port={$dbConfig['port']}";
-            $pdo = new PDO($dsn, $dbConfig['username'], $dbConfig['password']);
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $pdo->exec('LISTEN "'.self::CHANNEL.'"');
-            $connection = self::CHANNEL.'.'.$tenant->space;
-            $connections[$connection] = $pdo;
-        }
-
-        info('Listening on channels: '.implode(', ', array_keys($connections)));
+        info('Listening on tenants: '.implode(', ', array_keys($connections)));
 
         $running = true;
         if (extension_loaded('pcntl')) {
@@ -67,6 +57,17 @@ class TranslucidListen extends Command
 
         while ($running) {
             foreach ($connections as $connection => $tenantPdo) {
+
+                if (config('translucid.tenant_driver')) {
+                    $driver = app(config('translucid.tenant_driver'));
+                    if (method_exists($driver, 'resolveFeatureScope')) {
+                        $scope = $this->resolveFeatureScopeUsing(fn () => $driver->resolveFeatureScope($connection));
+                        if (! Feature::for($scope)->active(TranslucidFromDB::class)) {
+                            continue;
+                        }
+                    }
+                }
+
                 $notif = $tenantPdo->pgsqlGetNotify(
                     PDO::FETCH_ASSOC,
                     self::NON_BLOCKING
@@ -128,5 +129,10 @@ class TranslucidListen extends Command
                 'event' => $event,
             ],
         ];
+    }
+
+    public function resolveFeatureScopeUsing(?callable $scope): ?string
+    {
+        return $scope ? $scope() : null;
     }
 }
