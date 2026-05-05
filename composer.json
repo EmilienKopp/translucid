@@ -1,7 +1,6 @@
 {
     "name": "splitstack/translucid",
     "type": "library",
-    "version": "1.0.0",
     "description": "Realtime model updates for Laravel via Postgres LISTEN/NOTIFY or Eloquent lifecycle events",
     "keywords": [
         "laravel",
